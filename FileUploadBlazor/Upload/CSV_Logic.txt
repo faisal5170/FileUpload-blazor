@@ -1,0 +1,66 @@
+var readcsv = File.ReadAllText(filepath);
+                string[] csvfilerecord = readcsv.Split('\r');
+
+                var accountdate = Convert.ToDateTime(AccountDate);
+                var IsAccountDateSelected = true;
+
+                DataTable csvtbl = new DataTable();
+                csvtbl.Columns.Add("Id", typeof(int));
+                csvtbl.Columns.Add("accountdate", typeof(DateTime));
+                csvtbl.Columns.Add("CreateDate", typeof(DateTime));
+                csvtbl.Columns.Add("adviser", typeof(string));
+                csvtbl.Columns.Add("AccountNumber", typeof(string));
+                csvtbl.Columns.Add("AccountValue", typeof(string));
+                csvtbl.Columns.Add("UserCode", typeof(int));
+                csvtbl.Columns.Add("ClientFirstName", typeof(string));
+                csvtbl.Columns.Add("ClientLastName", typeof(string));
+                int id = 0;
+
+                #region LiveCode
+
+                //for (int i = 0; i < csvfilerecord.Count() - 1; i++)
+                foreach (var item in csvfilerecord)
+                {
+                    var row = item;
+                    if (row == "\n") { continue; }
+
+                    if (!string.IsNullOrEmpty(row))
+                    {
+                        var rows = row;
+                        while (rows.Contains('"'))
+                        {
+                            int Sindex = rows.IndexOf("\"");
+                            string strF = rows.Substring(rows.IndexOf("\""), rows.Length - rows.IndexOf("\""));
+                            int Lindex = strF.IndexOf("\"", 1);
+                            var sub = rows.Substring(Sindex, Lindex + 1);
+                            var newsub = sub.Replace(",", "&");
+                            newsub = newsub.Replace("\"", "");
+                            rows = rows.Replace(sub, newsub);
+                            rows = rows.Replace("\n", "");
+                        }
+
+                        var cells = rows.Split(',');
+                        string adviser = cells[0];
+                        string client = cells[2];
+                        var AccountNumber = cells[1];
+                        var AccountValue = decimal.Parse(cells[3].Replace('$', ' ').Replace("&", ""));
+
+                        if(AccountValue == 0)
+                        {
+                            continue;
+                        }
+
+                        id = id + 1;
+                        DataRow drcsvtbl = csvtbl.NewRow();
+                        drcsvtbl["Id"] = id;
+                        drcsvtbl["accountdate"] = accountdate;
+                        drcsvtbl["CreateDate"] = DateTime.Now;
+                        drcsvtbl["adviser"] = adviser;
+                        drcsvtbl["AccountNumber"] = AccountNumber;
+                        drcsvtbl["AccountValue"] = AccountValue;
+                        drcsvtbl["UserCode"] = Objbase.UserCode;
+                        drcsvtbl["ClientFirstName"] = (client.Split('&')[1]).Trim();
+                        drcsvtbl["ClientLastName"] = (client.Split('&')[0]).Trim();
+                        csvtbl.Rows.Add(drcsvtbl);
+                    }
+                }
